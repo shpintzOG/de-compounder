@@ -8,7 +8,8 @@ const currentState = {
   Earning: .129585,
   USD: 24.68,
   TripleEarn: 74.08,
-  TotalEarned: 2354
+  TotalEarned: 2354,
+  PriceOfDrm: 191.50
 }
 
 const data = [
@@ -37,16 +38,46 @@ const data = [
 
 function App() {
 
+  const [appState, setAppState] = useState(currentState)
+  const [reRender, setReRender] = useState('Value')
+
+  useEffect(() => {
+    console.log(reRender)
+    setReRender('False')
+  },[reRender])
+
   // Get Variable
   const onChange = (e) => {
+    const {name, value} = e.target
 
-
+    setAppState({
+      ...appState,
+      [name] : value
+    })
   }
 
   const onSubmit = (e) => {
-    e.PreventDefault()
+    e.preventDefault()
 
+    const currentDRM = (appState.Earning * 3) + data[data.length - 1].DRM
+    const usdEarning = appState.Earning * appState.PriceOfDrm
+    console.log(usdEarning)
+    const dailyEarning = usdEarning * 3
+    console.log(dailyEarning)
+    const totalEarning = data[data.length - 1].TotalEarned + dailyEarning
 
+    console.log(data[data.length - 1])
+
+    data.push({
+      Day: appState.Day,
+      DRM: currentDRM,
+      Earning: appState.Earning,
+      USD: usdEarning,
+      CycleEarn: dailyEarning,
+      TotalEarned: totalEarning,
+    })
+    console.log(data)
+    setReRender('True')
   }
 
 
@@ -65,11 +96,11 @@ function App() {
             data.map(v =>{
               return(
                 <li>
-                  <p>{v.Day}</p>
-                  <p>{v.DRM}</p>
-                  <p>{v.Earning}</p>
-                  <p>{v.CycleEarn}</p>
-                  <p>{v.TotalEarned}</p>
+                  <p>Day: {v.Day}</p>
+                  <p>DRM: {v.DRM}</p>
+                  <p>Earning: {v.Earning}</p>
+                  <p>CycleEarn: {v.CycleEarn}</p>
+                  <p>TotalEarned: {v.TotalEarned}</p>
                 </li>
               )
             })
@@ -78,21 +109,21 @@ function App() {
 
       </section>
 
-      <form>
+      <form onSubmit={onSubmit}>
 
         <label>
           Day:
-          <input type="number" name='day' />
+          <input type="number" name='Day' value={appState.Day} onChange={onChange}  />
         </label>
 
         <label>
           Earning:
-          <input type="number" />
+          <input type="number" name="Earning" value={appState.Earning} onChange={onChange} />
         </label>
 
         <label>
           Price DRM:
-          <input type="number" />
+          <input type="number" name="PriceOfDrm" value={appState.PriceOfDrm} onChange={onChange} />
         </label>
 
         <button type="submit">Submit</button>
