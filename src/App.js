@@ -136,7 +136,9 @@ function App() {
       </section>
 
 
-
+      <footer>
+        <p>Suuport so my girlfriend stops giving me a hard time</p>
+      </footer>
 
     </div>
   );
