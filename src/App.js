@@ -1,50 +1,29 @@
 import React, {useEffect, useState} from 'react'
+import {Key} from './Key'
+import Axios from 'axios'
 import './App.css';
 
 
 const currentState = {
   Day: 1,
-  DRM: 12.360349,
-  Earning: .129585,
+  DRM: 5.577715,
+  Earning: .061527,
   USD: 24.68,
   TripleEarn: 74.08,
-  TotalEarned: 2354,
+  TotalEarned: 913.90,
   PriceOfDrm: 191.50
 }
 
-const data = [
-  {
-    Day: 1,
-    DRM: 5.577715,
-    Earning: 0.061527,
-    CycleEarn: 30.24,
-    TotalEarned: 913.90
-  },
-  {
-    Day: 2,
-    DRM: 12.112123,
-    Earning: 0.123565,
-    CycleEarn: 69.18,
-    TotalEarned: 2165
-  },
-  {
-    Day: 3,
-    DRM: 12.360349,
-    Earning: 0.123565,
-    CycleEarn: 69.18,
-    TotalEarned: 2354.52
-  }
-]
-
 function App() {
-
   const [appState, setAppState] = useState(currentState)
-  const [reRender, setReRender] = useState('Value')
+  const [cData, setData] = useState([])
+  const [refresh, setRefresh] = useState(null)
 
   useEffect(() => {
-    console.log(reRender)
-    setReRender('False')
-  },[reRender])
+    Axios.get(`https://jsonbox-v2.herokuapp.com/${Key}`)
+    .then(res => setData(res.data))
+    setRefresh('False')
+  }, [refresh]);
 
   // Get Variable
   const onChange = (e) => {
@@ -55,37 +34,59 @@ function App() {
       [name] : value
     })
   }
-
+  // console.log(cData)
   const onSubmit = (e) => {
     e.preventDefault()
 
-    const currentDRM = (appState.Earning * 3) + data[data.length - 1].DRM
     const usdEarning = appState.Earning * appState.PriceOfDrm
-    console.log(usdEarning)
     const dailyEarning = usdEarning * 3
-    console.log(dailyEarning)
-    const totalEarning = data[data.length - 1].TotalEarned + dailyEarning
 
-    console.log(data[data.length - 1])
+    let currentDRM;
+    let totalEarning;
 
-    data.push({
+    if (cData.length === 0){
+      currentDRM = (appState.Earning * 3) + 0
+      totalEarning = 0 + dailyEarning
+    }else if (cData.length > 0){
+      currentDRM = (appState.Earning * 3) + cData[cData.length - 1].DRM
+      totalEarning = cData[cData.length - 1].TotalEarned + dailyEarning
+    }
+
+    const day = {
       Day: appState.Day,
+      PriceOfDrm: appState.PriceOfDrm,
       DRM: currentDRM,
       Earning: appState.Earning,
       USD: usdEarning,
       CycleEarn: dailyEarning,
       TotalEarned: totalEarning,
-    })
-    console.log(data)
-    setReRender('True')
+    }
+
+    Axios.post(`https://jsonbox-v2.herokuapp.com/${Key}`,day)
+      .then(res =>{
+        setData([
+          ...cData,
+          res.data
+        ])
+      })
+
+
   }
 
-
+  const deleteDay = (idToDelete) => {
+    Axios.delete(`https://jsonbox-v2.herokuapp.com/${Key}/${idToDelete}`)
+      .then(res => {
+        if (res.status === 200){
+          setRefresh('True')
+        }
+      })
+  }
 
   return (
     <div className="App">
       <header>
         <h2>Crypto Compounder</h2>
+        <p>by: <a href="https://github.com/shpintzOG">shpintzOG</a></p>
       </header>
 
       {/* List of days */}
@@ -93,14 +94,16 @@ function App() {
 
         <ul>
           {
-            data.map(v =>{
+            cData.length === 0 ? <h2>No days</h2> : cData.map(v =>{
               return(
-                <li>
-                  <p>Day: {v.Day}</p>
-                  <p>DRM: {v.DRM}</p>
-                  <p>Earning: {v.Earning}</p>
-                  <p>CycleEarn: {v.CycleEarn}</p>
-                  <p>TotalEarned: {v.TotalEarned}</p>
+                <li key={v._id}>
+                  <p>Day: <span>{v.Day}</span></p>
+                  <p>DRM: <span>{v.DRM}</span></p>
+                  <p>Earning: <span>{v.Earning}</span></p>
+                  <p>Every 8 Hours: <span>{v.USD}</span></p>
+                  <p>CycleEarn: <span>{v.CycleEarn}</span></p>
+                  <p>TotalEarned: <span>{v.TotalEarned}</span></p>
+                  <button onClick={() => deleteDay(v._id)}>Delete</button>
                 </li>
               )
             })
@@ -109,26 +112,28 @@ function App() {
 
       </section>
 
-      <form onSubmit={onSubmit}>
+      <section>
+        <form onSubmit={onSubmit}>
 
-        <label>
-          Day:
-          <input type="number" name='Day' value={appState.Day} onChange={onChange}  />
-        </label>
+          <label>
+            Day:
+            <input type="number" name='Day' value={appState.Day} onChange={onChange}  />
+          </label>
 
-        <label>
-          Earning:
-          <input type="number" name="Earning" value={appState.Earning} onChange={onChange} />
-        </label>
+          <label>
+            Earning:
+            <input type="number" name="Earning" value={appState.Earning} onChange={onChange} />
+          </label>
 
-        <label>
-          Price DRM:
-          <input type="number" name="PriceOfDrm" value={appState.PriceOfDrm} onChange={onChange} />
-        </label>
+          <label>
+            Price DRM:
+            <input type="number" name="PriceOfDrm" value={appState.PriceOfDrm} onChange={onChange} />
+          </label>
 
-        <button type="submit">Submit</button>
+          <button type="submit">Submit</button>
 
-      </form>
+        </form>
+      </section>
 
 
 
